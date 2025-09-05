@@ -9,7 +9,7 @@ module.exports = async (socket, msg, bot) => {
 
         const settingsMessage = `
 ╔════════════════════╗
-     ⚙️ *QUEEN HASUKI SETTINGS*  
+⚙️ *QUEEN HASUKI SETTINGS*  
 ╚════════════════════╝
 
 🤖 *Bot Info*
@@ -39,8 +39,10 @@ module.exports = async (socket, msg, bot) => {
 ━━━━━━━━━━━━━━━━
         `.trim();
 
+        // Send image with caption
         await socket.sendMessage(msg.key.remoteJid, {
-            text: settingsMessage
+            image: { url: "https://github.com/ZeroBugZone417/QUEEN-HASUKI-MINI-/blob/main/database/QUEEN%20HASUKI.png?raw=true" },
+            caption: settingsMessage
         }, { quoted: msg });
 
         // Update statistics
@@ -55,3 +57,4 @@ module.exports = async (socket, msg, bot) => {
         }, { quoted: msg });
     }
 };
+
