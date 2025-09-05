@@ -21,6 +21,7 @@ module.exports = async (socket, msg, bot) => {
 📋 *MAIN COMMANDS*
 ├ ${prefix}alive - Bot status
 ├ ${prefix}ping - Check latency
+├ ${prefix}rul - Show rules
 ├ ${prefix}help - Show help
 └ ${prefix}settings - Bot settings
 
