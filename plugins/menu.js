@@ -1,6 +1,6 @@
 /**
- * Menu Command Plugin
- * Copyright © 2025 DarkSide Developers
+ * Menu Command Plugin (QUEEN HASUKI)
+ * Copyright © 2025 Zero Bug Zone
  */
 
 module.exports = async (socket, msg, bot) => {
@@ -8,16 +8,15 @@ module.exports = async (socket, msg, bot) => {
         const prefix = bot.settings.prefix || '.';
         
         const menuMessage = `
-╭──────────────────────╮
-│   👑 QUEEN-MINI MENU   │
-│  Advanced Bot System   │
-╰──────────────────────╯
+╔══════════════════════╗
+      👑 *QUEEN HASUKI MENU* 👑
+╚══════════════════════╝
 
 🤖 *BOT INFO*
 ├ Name: ${bot.botName}
-├ Version: 2.0.0
+├ Version: ${bot.BOT_VERSION || '2.0.0'}
 ├ Prefix: ${prefix}
-└ Status: Active
+└ Status: ✅ Active
 
 📋 *MAIN COMMANDS*
 ├ ${prefix}alive - Bot status
@@ -49,9 +48,11 @@ module.exports = async (socket, msg, bot) => {
 ├ ${prefix}meme - Random meme
 └ ${prefix}fact - Random fact
 
-*© 2025 DarkSide Developers*
-*Owner: DarkWinzo*
-*GitHub: github.com/DarkWinzo*
+━━━━━━━━━━━━━━━━━━━━━━
+✨ Powered by *Zero Bug Zone*  
+👑 Owner: *Dineth Sudarshana*  
+🌐 GitHub: github.com/ZeroBugZone
+━━━━━━━━━━━━━━━━━━━━━━
         `.trim();
 
         await socket.sendMessage(msg.key.remoteJid, {
