@@ -7,8 +7,8 @@
 
 module.exports = {
     // Application Settings
-    APP_NAME: 'QUEEN-HASUKI',
-    APP_VERSION: '2.0.0',
+    APP_NAME: 'QUEEN-HASUKI MINI',
+    APP_VERSION: '1.0.0',
     APP_DESCRIPTION: 'Advanced WhatsApp Bot Management System',
     
     // Server Configuration
