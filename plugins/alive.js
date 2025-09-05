@@ -1,6 +1,6 @@
 /**
- * Alive Command Plugin
- * Copyright © 2025 DarkSide Developers
+ * Alive Command Plugin (QUEEN HASUKI)
+ * Copyright © 2025 Zero Bug Zone
  */
 
 module.exports = async (socket, msg, bot) => {
@@ -11,23 +11,29 @@ module.exports = async (socket, msg, bot) => {
         const seconds = Math.floor(uptime % 60);
 
         const aliveMessage = `
-╭─────────────────────╮
-│    🤖 QUEEN-MINI    │
-│      BOT ALIVE      │
-╰─────────────────────╯
+╔════════════════════╗
+      👑 *QUEEN HASUKI* 👑
+╚════════════════════╝
 
-📱 *Bot Name:* ${bot.botName}
-📞 *Phone:* ${bot.phoneNumber}
-⏰ *Uptime:* ${hours}h ${minutes}m ${seconds}s
-🔋 *Status:* Online & Active
-👑 *Version:* 2.0.0
+📡 *Status:* ✅ Online & Active  
+⏱️ *Uptime:* ${hours}h ${minutes}m ${seconds}s  
 
-*© 2025 DarkSide Developers*
-*Owner: DarkWinzo*
+🤖 *Bot Name:* ${bot.botName}  
+📞 *Phone:* ${bot.phoneNumber}  
+⚡ *Version:* ${bot.BOT_VERSION || '2.0.0'}  
+
+━━━━━━━━━━━━━━━━━━━━━━
+✨ Powered by *Zero Bug Zone*  
+👑 Owner: *Dineth Sudarshana*  
+━━━━━━━━━━━━━━━━━━━━━━
         `.trim();
 
+        // Image URL from your GitHub repository
+        const imageUrl = 'https://github.com/ZeroBugZone417/QUEEN-HASUKI-MINI-/blob/main/database/QUEEN%20HASUKI.png?raw=true';
+
         await socket.sendMessage(msg.key.remoteJid, {
-            text: aliveMessage
+            image: { url: imageUrl },
+            caption: aliveMessage
         }, { quoted: msg });
 
         // Update statistics
