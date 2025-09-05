@@ -1,56 +1,54 @@
 /**
- * Rules Command Plugin (QUEEN HASUKI)
+ * Interactive Rules Command Plugin (QUEEN HASUKI)
  * Copyright © 2025 Zero Bug Zone
  */
 
-const { cmd } = require("../command");
-
-cmd(
-  {
-    pattern: "rul",
-    desc: "📜 Show bot rules",
-    category: "main",
-    filename: __filename,
-  },
-  async (bot, mek, m, { reply }) => {
+module.exports = async (socket, msg, bot) => {
     try {
-      const rulesMessage = `
+        const imageUrl = 'https://github.com/ZeroBugZone417/QUEEN-HASUKI-MINI-/blob/main/database/QUEEN%20HASUKI.png?raw=true';
+
+        const rulesMessage = `
 ╔════════════════════╗
-   📜 *BOT RULES & TERMS*  
+        📜 *RULES*  
 ╚════════════════════╝
 
-1️⃣ *Do not spam commands*
-   - Spamming can get you blocked ❌
-
-2️⃣ *Respect all users*
-   - No abuse, racism, or harassment 🚫
-
-3️⃣ *No illegal content*
-   - Bot will reject piracy, scams, or adult stuff ⚠️
-
-4️⃣ *Use responsibly*
-   - Heavy usage may cause temporary ban ⏳
-
-5️⃣ *Follow owner instructions*
-   - Admin decisions are final 👑
+1️⃣ Be respectful to everyone.  
+2️⃣ No spamming or flooding the chat.  
+3️⃣ Avoid sharing illegal or harmful content.  
+4️⃣ Do not share others’ personal information.  
+5️⃣ Use commands responsibly.  
 
 ━━━━━━━━━━━━━━━━
-✅ If you agree with these rules, enjoy using *QUEEN HASUKI* 💫  
-❌ If not, please leave gracefully.
-
 ✨ Powered by *Zero Bug Zone*  
-👑 Owner: *Dineth Sudarshana*  
+👑 Owner: *Dineth Sudarshana*
 ━━━━━━━━━━━━━━━━
-      `.trim();
+        `.trim();
 
-      await bot.sendMessage(m.chat, {
-        image: { url: "https://github.com/ZeroBugZone417/QUEEN-HASUKI-MINI-/blob/main/database/QUEEN%20HASUKI.png?raw=true" },
-        caption: rulesMessage,
-      }, { quoted: mek });
+        // Define buttons
+        const buttons = [
+            { buttonId: 'accept_rules', buttonText: { displayText: '✅ Accept' }, type: 1 },
+            { buttonId: 'more_info', buttonText: { displayText: 'ℹ️ More Info' }, type: 1 }
+        ];
 
-    } catch (e) {
-      console.error("Rules command error:", e);
-      reply("❌ Error while displaying rules!");
+        const buttonMessage = {
+            image: { url: imageUrl },
+            caption: rulesMessage,
+            footer: 'Click a button to proceed',
+            buttons: buttons,
+            headerType: 4
+        };
+
+        await socket.sendMessage(msg.key.remoteJid, buttonMessage, { quoted: msg });
+
+        // Update statistics
+        const stats = bot.statistics || {};
+        stats.messagesSent = (stats.messagesSent || 0) + 1;
+        await bot.update({ statistics: stats });
+
+    } catch (error) {
+        console.error('Interactive Rules command error:', error);
+        await socket.sendMessage(msg.key.remoteJid, {
+            text: '❌ Error fetching rules'
+        }, { quoted: msg });
     }
-  }
-);
+};
