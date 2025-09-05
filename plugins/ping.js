@@ -1,21 +1,37 @@
 /**
- * Ping Command Plugin
- * Copyright © 2025 DarkSide Developers
+ * Ping Command Plugin (QUEEN HASUKI)
+ * Copyright © 2025 Zero Bug Zone
  */
 
 module.exports = async (socket, msg, bot) => {
     try {
         const start = Date.now();
         
+        // Send initial ping message
         const pingMsg = await socket.sendMessage(msg.key.remoteJid, {
-            text: '🏓 Pinging...'
+            text: '🏓 Pinging QUEEN HASUKI...'
         }, { quoted: msg });
 
         const end = Date.now();
         const latency = end - start;
 
+        const pongMessage = `
+╔════════════════════╗
+       🏓 *PONG!*  
+╚════════════════════╝
+
+⚡ *Latency:* ${latency}ms  
+🤖 *Bot:* ${bot.botName}  
+📱 *Status:* ✅ Online & Active  
+
+━━━━━━━━━━━━━━━━
+✨ Powered by *Zero Bug Zone*  
+👑 Owner: *Dineth Sudarshana*
+━━━━━━━━━━━━━━━━
+        `.trim();
+
         await socket.sendMessage(msg.key.remoteJid, {
-            text: `🏓 *Pong!*\n\n⚡ *Latency:* ${latency}ms\n🤖 *Bot:* ${bot.botName}\n📱 *Status:* Online`,
+            text: pongMessage,
             edit: pingMsg.key
         });
 
