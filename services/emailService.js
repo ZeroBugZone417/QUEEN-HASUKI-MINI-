@@ -6,16 +6,17 @@
 const nodemailer = require('nodemailer');
 const config = require('../config');
 
-// Create transporter
-const transporter = nodemailer.createTransporter({
+//
+const transporter = nodemailer.createTransport({
     host: config.EMAIL_HOST,
     port: config.EMAIL_PORT,
-    secure: false,
+    secure: false, // 465 නම් true, වෙන port නම් false
     auth: {
         user: config.EMAIL_USER,
         pass: config.EMAIL_PASS
     }
 });
+
 
 // Send welcome email
 const sendWelcomeEmail = async (email, firstName, verificationToken) => {
