@@ -1,63 +1,77 @@
 /**
- * Menu Command Plugin (QUEEN HASUKI)
+ * Menu Plugin (QUEEN HASUKI MINI)
  * Copyright © 2025 Zero Bug Zone
+ * Owner: Dineth Sudarshana
+ * GitHub: github.com/zerobugzone417
  */
 
-const { cmd, commands } = require("../command");
-
-cmd(
-  {
-    pattern: "menu",
-    desc: "📖 Display all command categories",
-    category: "main",
-    filename: __filename,
-  },
-  async (bot, mek, m, { from, reply }) => {
+module.exports = async (socket, msg, bot) => {
     try {
-      const categories = {};
+        const prefix = bot.settings.prefix || '.';
+        
+        const menuMessage = `
+╭────────────────────────╮
+│   👑 QUEEN HASUKI MINI   │
+│  Advanced Bot System     │
+╰────────────────────────╯
 
-      // Group commands by category
-      for (let cmdName in commands) {
-        const cmdData = commands[cmdName];
-        const cat = cmdData.category?.toLowerCase() || "other";
-        if (!categories[cat]) categories[cat] = [];
-        categories[cat].push({
-          pattern: cmdData.pattern,
-          desc: cmdData.desc || "No description",
-        });
-      }
+🤖 *BOT INFO*
+├ Name: ${bot.botName}
+├ Version: 2.0.0
+├ Prefix: ${prefix}
+└ Status: Active
 
-      // Build menu text
-      let menuText = `
-╔════════════════════╗
-   👑 *HASUKI BOT MENU* 👑
-╚════════════════════╝
+📋 *MAIN COMMANDS*
+├ ${prefix}alive - Bot status
+├ ${prefix}ping - Check latency
+├ ${prefix}help - Show help
+└ ${prefix}settings - Bot settings
 
-`.trim() + "\n\n";
+🎵 *MEDIA COMMANDS*
+├ ${prefix}song <name> - Download song
+├ ${prefix}video <name> - Download video
+├ ${prefix}ytmp3 <url> - YouTube to MP3
+└ ${prefix}ytmp4 <url> - YouTube to MP4
 
-      for (let cat in categories) {
-        menuText += `*📂 ${cat.toUpperCase()}*\n`;
-        categories[cat].forEach((c) => {
-          menuText += `➤ *${c.pattern}* — _${c.desc}_\n`;
-        });
-        menuText += "\n"; // spacing
-      }
+🛠️ *UTILITY COMMANDS*
+├ ${prefix}sticker - Create sticker
+├ ${prefix}weather <city> - Weather info
+├ ${prefix}translate <text> - Translate
+└ ${prefix}qr <text> - Generate QR code
 
-      // Footer with owner + GitHub
-      menuText += `
+👥 *GROUP COMMANDS*
+├ ${prefix}tagall - Tag everyone
+├ ${prefix}promote - Promote member
+├ ${prefix}demote - Demote admin
+└ ${prefix}kick - Remove member
+
+🎮 *FUN COMMANDS*
+├ ${prefix}joke - Random joke
+├ ${prefix}quote - Inspirational quote
+├ ${prefix}meme - Random meme
+└ ${prefix}fact - Random fact
+
 ━━━━━━━━━━━━━━━━━━━━━━
-👤 *Owner:* wa.me/94769983151  
-🌐 *GitHub:* https://github.com/ZeroBugZone  
-🛡 *Powered by Zero Bug Zone*
+👑 QUEEN HASUKI MINI  
+© 2025 Zero Bug Zone  
+👤 Owner: Dineth Sudarshana  
+🌐 GitHub: github.com/zerobugzone417
 ━━━━━━━━━━━━━━━━━━━━━━
-`.trim();
+        `.trim();
 
-      // Send menu
-      await bot.sendMessage(from, { text: menuText }, { quoted: mek });
+        await socket.sendMessage(msg.key.remoteJid, {
+            text: menuMessage
+        }, { quoted: msg });
 
-    } catch (err) {
-      console.error("Menu Error:", err);
-      reply("❌ Error generating menu.");
+        // Update statistics
+        const stats = bot.statistics || {};
+        stats.messagesSent = (stats.messagesSent || 0) + 1;
+        await bot.update({ statistics: stats });
+
+    } catch (error) {
+        console.error('Menu command error:', error);
+        await socket.sendMessage(msg.key.remoteJid, {
+            text: '❌ Error executing menu command'
+        }, { quoted: msg });
     }
-  }
-);
+};
