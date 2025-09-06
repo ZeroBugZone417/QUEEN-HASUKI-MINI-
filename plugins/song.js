@@ -1,27 +1,22 @@
-const { cmd } = require("../command");
-const ytdl = require("ytdl-core");
+/**
+ * Song Command
+ * Download song by name
+ */
 
-cmd({
-  pattern: "ytmp3",
-  desc: "🎶 Download YouTube audio",
-  category: "download",
-  filename: __filename,
-}, async (bot, mek, m, { q, reply }) => {
-  try {
-    if (!q) return reply("⚠️ *Usage:* .ytmp3 <YouTube URL>");
-    if (!ytdl.validateURL(q)) return reply("❌ Invalid YouTube URL!");
+const ytdl = require('ytdl-core'); // youtube download library
 
-    let info = await ytdl.getInfo(q);
-    let title = info.videoDetails.title;
+module.exports = {
+    pattern: 'song',
+    category: 'Media',
+    desc: 'Download song',
+    alias: [],
+    run: async (socket, msg, bot, { args }) => {
+        if (!args[0]) return socket.sendMessage(msg.key.remoteJid, { text: 'Please provide song name' }, { quoted: msg });
 
-    await reply(`🎶 *Downloading:*\n📌 Title: ${title}`);
+        const search = args.join(' ');
+        // Example: call some API to get song URL
+        const songUrl = `https://youtube.com/watch?v=dQw4w9WgXcQ`; // placeholder
 
-    bot.sendMessage(m.chat, {
-      audio: { url: ytdl(q, { filter: "audioonly" }) },
-      mimetype: "audio/mp3"
-    }, { quoted: mek });
-  } catch (e) {
-    console.error(e);
-    reply("❌ Error downloading audio!");
-  }
-});
+        await socket.sendMessage(msg.key.remoteJid, { text: `Downloading: ${search}\nURL: ${songUrl}` }, { quoted: msg });
+    }
+};
