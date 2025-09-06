@@ -3,72 +3,61 @@
  * Copyright © 2025 Zero Bug Zone
  */
 
-module.exports = async (socket, msg, bot) => {
+const { cmd, commands } = require("../command");
+
+cmd(
+  {
+    pattern: "menu",
+    desc: "📖 Display all command categories",
+    category: "main",
+    filename: __filename,
+  },
+  async (bot, mek, m, { from, reply }) => {
     try {
-        const prefix = bot.settings.prefix || '.';
-        
-        const menuMessage = `
-╔══════════════════════╗
-      👑 *QUEEN HASUKI MENU* 👑
-╚══════════════════════╝
+      const categories = {};
 
-🤖 *BOT INFO*
-├ Name: ${bot.botName}
-├ Version: ${bot.BOT_VERSION || '2.0.0'}
-├ Prefix: ${prefix}
-└ Status: ✅ Active
+      // Group commands by category
+      for (let cmdName in commands) {
+        const cmdData = commands[cmdName];
+        const cat = cmdData.category?.toLowerCase() || "other";
+        if (!categories[cat]) categories[cat] = [];
+        categories[cat].push({
+          pattern: cmdData.pattern,
+          desc: cmdData.desc || "No description",
+        });
+      }
 
-📋 *MAIN COMMANDS*
-├ ${prefix}alive - Bot status
-├ ${prefix}ping - Check latency
-├ ${prefix}rul - Show rules
-├ ${prefix}help - Show help
-└ ${prefix}settings - Bot settings
+      // Build menu text
+      let menuText = `
+╔════════════════════╗
+   👑 *HASUKI BOT MENU* 👑
+╚════════════════════╝
 
-🎵 *MEDIA COMMANDS*
-├ ${prefix}song <name> - Download song
-├ ${prefix}video <name> - Download video
-├ ${prefix}ytmp3 <url> - YouTube to MP3
-└ ${prefix}ytmp4 <url> - YouTube to MP4
+`.trim() + "\n\n";
 
-🛠️ *UTILITY COMMANDS*
-├ ${prefix}sticker - Create sticker
-├ ${prefix}weather <city> - Weather info
-├ ${prefix}translate <text> - Translate
-└ ${prefix}qr <text> - Generate QR code
+      for (let cat in categories) {
+        menuText += `*📂 ${cat.toUpperCase()}*\n`;
+        categories[cat].forEach((c) => {
+          menuText += `➤ *${c.pattern}* — _${c.desc}_\n`;
+        });
+        menuText += "\n"; // spacing
+      }
 
-👥 *GROUP COMMANDS*
-├ ${prefix}tagall - Tag everyone
-├ ${prefix}promote - Promote member
-├ ${prefix}demote - Demote admin
-└ ${prefix}kick - Remove member
-
-🎮 *FUN COMMANDS*
-├ ${prefix}joke - Random joke
-├ ${prefix}quote - Inspirational quote
-├ ${prefix}meme - Random meme
-└ ${prefix}fact - Random fact
-
+      // Footer with owner + GitHub
+      menuText += `
 ━━━━━━━━━━━━━━━━━━━━━━
-✨ Powered by *Zero Bug Zone*  
-👑 Owner: *Dineth Sudarshana*  
-🌐 GitHub: github.com/ZeroBugZone
+👤 *Owner:* wa.me/94769983151  
+🌐 *GitHub:* https://github.com/ZeroBugZone  
+🛡 *Powered by Zero Bug Zone*
 ━━━━━━━━━━━━━━━━━━━━━━
-        `.trim();
+`.trim();
 
-        await socket.sendMessage(msg.key.remoteJid, {
-            text: menuMessage
-        }, { quoted: msg });
+      // Send menu
+      await bot.sendMessage(from, { text: menuText }, { quoted: mek });
 
-        // Update statistics
-        const stats = bot.statistics || {};
-        stats.messagesSent = (stats.messagesSent || 0) + 1;
-        await bot.update({ statistics: stats });
-
-    } catch (error) {
-        console.error('Menu command error:', error);
-        await socket.sendMessage(msg.key.remoteJid, {
-            text: '❌ Error executing menu command'
-        }, { quoted: msg });
+    } catch (err) {
+      console.error("Menu Error:", err);
+      reply("❌ Error generating menu.");
     }
-};
+  }
+);
