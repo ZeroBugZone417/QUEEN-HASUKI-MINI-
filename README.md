@@ -1,2 +1,2 @@
-# MULLER-MINI-BOT
+# Queen Hasuki-MINI-BOT
 New WhatsApp Mini 
