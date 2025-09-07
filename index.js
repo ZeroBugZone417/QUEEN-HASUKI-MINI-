@@ -93,7 +93,10 @@ const startServer = async () => {
     try {
         // Connect to database
         await connectDatabase();
-        
+
+        // Load bot plugins
+        require('./plugins/facebook');  // <-- Facebook plugin load
+
         // Start server
         const PORT = config.PORT;
         server.listen(PORT, () => {
