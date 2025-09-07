@@ -15,4 +15,3 @@ const FacebookVideo = database.define('FacebookVideo', {
 });
 
 module.exports = FacebookVideo;
-
