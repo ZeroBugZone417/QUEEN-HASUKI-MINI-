@@ -1,21 +1,28 @@
-// Array to store all registered commands
-const commands = [];
+// command/index.js
+const fs = require('fs');
+const path = require('path');
+
+// Initialize global commands array
+if (!global.commands) global.commands = [];
 
 /**
- * Register a new command
- * @param {Object} options - Command options
- * @param {Function} handler - Command handler function
+ * Load all command plugins from /commands folder
  */
-function cmd({ pattern, alias = [], desc = "", category = "", filename, use }, handler) {
-    commands.push({ pattern, alias, desc, category, filename, use, handler });
+function loadCommands() {
+    const commandPath = path.join(__dirname, 'commands'); // commands folder
+    const files = fs.readdirSync(commandPath).filter(f => f.endsWith('.js'));
+
+    for (const file of files) {
+        try {
+            const command = require(path.join(commandPath, file));
+            if (command && command.pattern && typeof command.function === 'function') {
+                global.commands.push(command);
+                console.log(`✅ Loaded command: ${command.pattern}`);
+            }
+        } catch (err) {
+            console.error(`❌ Failed to load command ${file}:`, err);
+        }
+    }
 }
 
-/**
- * Get all registered commands
- * @returns {Array} commands
- */
-function getCommands() {
-    return commands;
-}
-
-module.exports = { cmd, getCommands };
+module.exports = { loadCommands };
