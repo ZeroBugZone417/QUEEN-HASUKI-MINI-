@@ -1,29 +1,28 @@
 const fs = require('fs');
 const path = require('path');
 
-// Global commands array
-global.commands = global.commands || [];
+global.commands = []; // reset commands array
 
-// Plugin loader
 function loadPlugins() {
     const pluginDir = path.join(__dirname, 'plugins');
-    if (!fs.existsSync(pluginDir)) return;
+    if (!fs.existsSync(pluginDir)) return console.log('⚠️ Plugin folder not found!');
 
-    fs.readdirSync(pluginDir).forEach(file => {
-        if (file.endsWith('.js')) {
-            const cmdPattern = path.basename(file, '.js');
+    const files = fs.readdirSync(pluginDir).filter(f => f.endsWith('.js'));
+    for (const file of files) {
+        try {
+            const cmdPattern = file.replace('.js', '');
+            const cmdFunc = require(path.join(pluginDir, file));
+
+            // check duplicates
             if (!global.commands.find(c => c.pattern === cmdPattern)) {
-                try {
-                    const cmd = require(`./plugins/${file}`);
-                    global.commands.push({ pattern: cmdPattern, function: cmd });
-                    console.log(`✅ Loaded plugin: ${file}`);
-                } catch (err) {
-                    console.error(`❌ Failed to load plugin: ${file}`, err);
-                }
+                global.commands.push({ pattern: cmdPattern, function: cmdFunc });
+                console.log(`✅ Loaded plugin: ${file}`);
             }
+        } catch (err) {
+            console.error(`❌ Failed to load plugin: ${file}`, err);
         }
-    });
+    }
 }
 
-// Export function
 module.exports = { loadPlugins };
+
