@@ -2,6 +2,12 @@
  * QUEEN-MINI Main Server + WhatsApp Bot
  * Copyright © 2025 DarkSide Developers
  * Owner: DarkWinzo
+ */ 
+
+/**
+ * QUEEN-MINI Main Server + WhatsApp Bot
+ * Copyright © 2025 DarkSide Developers
+ * Owner: DarkWinzo
  */
 
 const express = require('express');
@@ -26,7 +32,7 @@ const {
 const config = require('./config');
 const { connectDatabase } = require('./database/connection');
 const { generalLimiter } = require('./middleware/rateLimiter');
-const { loadPlugins } = require('./bot'); // Plugin loader
+const { loadPlugins } = require('./plugins/bot'); // ✅ Plugin loader path fixed
 
 // ===== EXPRESS SERVER =====
 const app = express();
@@ -126,8 +132,12 @@ async function startBot(){
 
     const cmd = global.commands.find(c=>c.pattern===commandName);
     if(cmd){
-      try{ await cmd.function(sock, mek, { from, body, args, q, isOwner, reply }); }
-      catch(err){ console.error('[PLUGIN ERROR]', err); await reply('❌ Error executing command'); }
+      try{ 
+        await cmd.function(sock, mek, { from, body, args, q, isOwner, reply });
+      } catch(err){ 
+        console.error('[PLUGIN ERROR]', err); 
+        await reply('❌ Error executing command'); 
+      }
     }
   });
 
