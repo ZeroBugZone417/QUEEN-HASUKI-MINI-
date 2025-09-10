@@ -1,0 +1,7 @@
+{
+  "build": {
+    "env": {
+      "NODE_PRE_GYP_FORCE_PURE_JS": "true"
+    }
+  }
+}
