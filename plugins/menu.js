@@ -1,5 +1,5 @@
 /**
- * Menu Plugin (QUEEN HASUKI MINI)
+ * Menu Plugin (QUEEN HASUKI MINI) - Button Version
  * Copyright © 2025 Zero Bug Zone
  * Owner: Dineth Sudarshana
  * GitHub: github.com/zerobugzone417
@@ -9,59 +9,61 @@ module.exports = async (socket, msg, bot) => {
     try {
         const prefix = bot.settings.prefix || '.';
         
-        const menuMessage = `
-╭────────────────────────╮
-│   👑 QUEEN HASUKI MINI   │
-│  Advanced Bot System     │
-╰────────────────────────╯
+        const menuMessage = `👑 *QUEEN HASUKI MINI* 👑
+Advanced Bot System
 
-🤖 *BOT INFO*
-├ Name: ${bot.botName}
-├ Version: 2.0.0
-├ Prefix: ${prefix}
-└ Status: Active
+🤖 BOT INFO
+• Name: ${bot.botName}
+• Version: 2.0.0
+• Prefix: ${prefix}
+• Status: Active
 
-📋 *MAIN COMMANDS*
-├ ${prefix}alive - Bot status
-├ ${prefix}ping - Check latency
-├ ${prefix}help - Show help
-└ ${prefix}settings - Bot settings
+📋 MAIN COMMANDS
+• ${prefix}alive
+• ${prefix}ping
+• ${prefix}help
+• ${prefix}settings
 
-🎵 *MEDIA COMMANDS*
-├ ${prefix}song <name> - Download song
-├ ${prefix}video <name> - Download video
-├ ${prefix}ytmp3 <url> - YouTube to MP3
-└ ${prefix}ytmp4 <url> - YouTube to MP4
+🎵 MEDIA COMMANDS
+• ${prefix}song <name>
+• ${prefix}video <name>
+• ${prefix}ytmp3 <url>
+• ${prefix}ytmp4 <url>
 
-🛠️ *UTILITY COMMANDS*
-├ ${prefix}sticker - Create sticker
-├ ${prefix}weather <city> - Weather info
-├ ${prefix}translate <text> - Translate
-└ ${prefix}qr <text> - Generate QR code
+🛠️ UTILITY COMMANDS
+• ${prefix}sticker
+• ${prefix}weather <city>
+• ${prefix}translate <text>
+• ${prefix}qr <text>
 
-👥 *GROUP COMMANDS*
-├ ${prefix}tagall - Tag everyone
-├ ${prefix}promote - Promote member
-├ ${prefix}demote - Demote admin
-└ ${prefix}kick - Remove member
+👥 GROUP COMMANDS
+• ${prefix}tagall
+• ${prefix}promote
+• ${prefix}demote
+• ${prefix}kick
 
-🎮 *FUN COMMANDS*
-├ ${prefix}joke - Random joke
-├ ${prefix}quote - Inspirational quote
-├ ${prefix}meme - Random meme
-└ ${prefix}fact - Random fact
+🎮 FUN COMMANDS
+• ${prefix}joke
+• ${prefix}quote
+• ${prefix}meme
+• ${prefix}fact`;
 
-━━━━━━━━━━━━━━━━━━━━━━
-👑 QUEEN HASUKI MINI  
-© 2025 Zero Bug Zone  
-👤 Owner: Dineth Sudarshana  
-🌐 GitHub: github.com/zerobugzone417
-━━━━━━━━━━━━━━━━━━━━━━
-        `.trim();
+        // Define buttons
+        const buttons = [
+            { buttonId: `${prefix}alive`, buttonText: { displayText: 'Alive' }, type: 1 },
+            { buttonId: `${prefix}help`, buttonText: { displayText: 'Help' }, type: 1 },
+            { buttonId: `${prefix}ping`, buttonText: { displayText: 'Ping' }, type: 1 },
+            { buttonId: `${prefix}settings`, buttonText: { displayText: 'Settings' }, type: 1 },
+        ];
 
-        await socket.sendMessage(msg.key.remoteJid, {
-            text: menuMessage
-        }, { quoted: msg });
+        const buttonMessage = {
+            text: menuMessage,
+            footer: '👑 QUEEN HASUKI MINI | © 2025 Zero Bug Zone',
+            buttons: buttons,
+            headerType: 1
+        };
+
+        await socket.sendMessage(msg.key.remoteJid, buttonMessage, { quoted: msg });
 
         // Update statistics
         const stats = bot.statistics || {};
@@ -69,9 +71,9 @@ module.exports = async (socket, msg, bot) => {
         await bot.update({ statistics: stats });
 
     } catch (error) {
-        console.error('Menu command error:', error);
+        console.error('Menu button command error:', error);
         await socket.sendMessage(msg.key.remoteJid, {
-            text: '❌ Error executing menu command'
+            text: '❌ Error executing menu button command'
         }, { quoted: msg });
     }
 };
