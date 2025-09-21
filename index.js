@@ -67,17 +67,19 @@ const credsFolder = path.join(__dirname, 'auth_info_baileys');
 // Initialize global commands
 if (!global.commands) global.commands = [];
 
+/**
+ * START BOT
+ */
 async function startBot() {
-  // ✅ Dynamic import Baileys
-  const baileys = await import('@whiskeysockets/baileys');
-  const makeWASocket = baileys.default;
+  // ✅ Correct dynamic import for Baileys
   const {
+    default: makeWASocket,
     useMultiFileAuthState,
     getContentType,
     fetchLatestBaileysVersion,
     DisconnectReason,
     Browsers
-  } = baileys;
+  } = await import('@whiskeysockets/baileys');
 
   const { state, saveCreds } = await useMultiFileAuthState(credsFolder);
   const { version } = await fetchLatestBaileysVersion();
@@ -91,22 +93,27 @@ async function startBot() {
     syncFullHistory: true
   });
 
+  // 🔄 Connection handler with auto-reconnect
   sock.ev.on('connection.update', async update => {
     const { connection, lastDisconnect } = update;
+
     if (connection === 'close') {
       const code = lastDisconnect?.error?.output?.statusCode;
-      if (code !== DisconnectReason.loggedOut) startBot();
-      else console.error('❌ Logged out from WhatsApp, delete auth folder to relogin.');
+      if (code !== DisconnectReason.loggedOut) {
+        console.log(chalk.yellow('🔄 Reconnecting WhatsApp...'));
+        setTimeout(startBot, 5000);
+      } else {
+        console.error(chalk.red('❌ Logged out from WhatsApp, delete auth folder to relogin.'));
+      }
     } else if (connection === 'open') {
-      console.log('✅ Bot connected');
-      // Load all plugins after bot connects
-      loadPlugins();
+      console.log(chalk.green('✅ Bot connected to WhatsApp.'));
+      loadPlugins(); // Load plugins when connected
     }
   });
 
   sock.ev.on('creds.update', saveCreds);
 
-  // Messages handler
+  // 📩 Messages handler
   sock.ev.on('messages.upsert', async ({ messages }) => {
     if (!messages || !messages.length) return;
     const mek = messages[0];
