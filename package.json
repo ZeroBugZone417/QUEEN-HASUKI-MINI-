@@ -11,11 +11,11 @@
     "fix": "npx eslint . --fix"
   },
   "dependencies": {
-    "@whiskeysockets/baileys": "^6.7.8",              // ✅ stable bailey release
+    "@whiskeysockets/baileys": "^6.7.8",             
     "express": "^4.19.2",
     "express-rate-limit": "^7.2.0",
     "fs-extra": "^11.3.0",
-    "node-fetch": "^3.3.2",                          // ✅ upgraded to v3 (ESM)
+    "node-fetch": "^3.3.2",                          
     "pino": "^9.5.0",
     "jimp": "^0.22.12",
     "@octokit/rest": "^21.0.0",
@@ -31,7 +31,7 @@
     "jsonwebtoken": "^9.0.2",
     "nodemailer": "^6.9.15",
     "uuid": "^9.0.1",
-    "chalk": "^5.3.0",                               // ✅ chalk v5 (ESM only)
+    "chalk": "^5.3.0",                              
     "cors": "^2.8.5",
     "helmet": "^7.1.0",
     "compression": "^1.7.4",
@@ -43,7 +43,7 @@
   },
   "devDependencies": {
     "nodemon": "^3.1.7",
-    "eslint": "^9.14.0"                              // ✅ added linting
+    "eslint": "^9.14.0"                              
   },
   "engines": {
     "node": ">=18.0.0"
