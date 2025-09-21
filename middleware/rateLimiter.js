@@ -16,6 +16,7 @@ const createRateLimiter = (windowMs, max, message) => {
         },
         standardHeaders: true,
         legacyHeaders: false,
+        validate: { trustProxy: false }   // ✅ disable strict trust proxy check
     });
 };
 
@@ -27,13 +28,13 @@ const generalLimiter = createRateLimiter(
 
 const authLimiter = createRateLimiter(
     15 * 60 * 1000, // 15 minutes
-    5, // 5 attempts
+    5,              // 5 attempts
     'Too many authentication attempts'
 );
 
 const botLimiter = createRateLimiter(
     60 * 1000, // 1 minute
-    10, // 10 requests
+    10,        // 10 requests
     'Too many bot operations'
 );
 
