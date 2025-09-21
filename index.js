@@ -21,6 +21,10 @@ const { loadPlugins } = require('./plugins/bot'); // ✅ Plugin loader path fixe
 
 // ===== EXPRESS SERVER =====
 const app = express();
+
+// ✅ Fix express-rate-limit trust proxy issue
+app.set('trust proxy', 1);
+
 const server = http.createServer(app);
 const io = socketIo(server, { cors: { origin: "*", methods: ["GET","POST"] } });
 
@@ -67,19 +71,17 @@ const credsFolder = path.join(__dirname, 'auth_info_baileys');
 // Initialize global commands
 if (!global.commands) global.commands = [];
 
-/**
- * START BOT
- */
 async function startBot() {
-  // ✅ Correct dynamic import for Baileys
+  // ✅ Dynamic import Baileys
+  const baileys = await import('@whiskeysockets/baileys');
+  const makeWASocket = baileys.default;
   const {
-    default: makeWASocket,
     useMultiFileAuthState,
     getContentType,
     fetchLatestBaileysVersion,
     DisconnectReason,
     Browsers
-  } = await import('@whiskeysockets/baileys');
+  } = baileys;
 
   const { state, saveCreds } = await useMultiFileAuthState(credsFolder);
   const { version } = await fetchLatestBaileysVersion();
@@ -93,27 +95,30 @@ async function startBot() {
     syncFullHistory: true
   });
 
-  // 🔄 Connection handler with auto-reconnect
   sock.ev.on('connection.update', async update => {
     const { connection, lastDisconnect } = update;
-
     if (connection === 'close') {
       const code = lastDisconnect?.error?.output?.statusCode;
+      console.log(chalk.red('❌ Disconnected from WhatsApp, code:'), code);
       if (code !== DisconnectReason.loggedOut) {
-        console.log(chalk.yellow('🔄 Reconnecting WhatsApp...'));
-        setTimeout(startBot, 5000);
+        console.log(chalk.yellow('🔄 Reconnecting...'));
+        startBot();
       } else {
-        console.error(chalk.red('❌ Logged out from WhatsApp, delete auth folder to relogin.'));
+        console.error('❌ Logged out from WhatsApp, delete auth folder to relogin.');
       }
     } else if (connection === 'open') {
-      console.log(chalk.green('✅ Bot connected to WhatsApp.'));
-      loadPlugins(); // Load plugins when connected
+      console.log(chalk.green('✅ Bot connected to WhatsApp'));
+      try {
+        loadPlugins();
+      } catch (err) {
+        console.error('❌ Plugin loading error:', err);
+      }
     }
   });
 
   sock.ev.on('creds.update', saveCreds);
 
-  // 📩 Messages handler
+  // Messages handler
   sock.ev.on('messages.upsert', async ({ messages }) => {
     if (!messages || !messages.length) return;
     const mek = messages[0];
@@ -140,7 +145,9 @@ async function startBot() {
     const isOwner = ownerNumber.includes((sender || '').split('@')[0]);
     const reply = text => sock.sendMessage(from, { text }, { quoted: mek });
 
-    const cmd = global.commands.find(c => c.pattern === commandName);
+    // ✅ Case-insensitive command matching
+    const cmd = global.commands.find(c => c.pattern.toLowerCase() === commandName.toLowerCase());
+
     if (cmd) {
       try {
         await cmd.function(sock, mek, { from, body, args, q, isOwner, reply });
