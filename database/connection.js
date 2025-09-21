@@ -13,7 +13,7 @@ const DATABASE_URL = config.DATABASE_URL;
 const database = DATABASE_URL === "local" ?
     new Sequelize({ 
         dialect: 'sqlite', 
-        storage: "./database/store/queen-mini.db", 
+        storage: "database/models/hasuki.db", 
         logging: false,
         pool: {
             max: 5,
