@@ -1,5 +1,5 @@
 /**
- * Bot Service
+ * Bot Service (Updated)
  * Copyright © 2025 DarkSide Developers
  */
 
@@ -9,7 +9,8 @@ const {
     delay,
     makeCacheableSignalKeyStore,
     Browsers,
-    jidNormalizedUser
+    jidNormalizedUser,
+    getContentType
 } = require('@whiskeysockets/baileys');
 const fs = require('fs-extra');
 const path = require('path');
@@ -20,80 +21,62 @@ const activeSockets = new Map();
 const SESSION_BASE_PATH = './sessions';
 
 // Ensure session directory exists
-if (!fs.existsSync(SESSION_BASE_PATH)) {
-    fs.mkdirSync(SESSION_BASE_PATH, { recursive: true });
-}
+fs.ensureDirSync(SESSION_BASE_PATH);
 
 // Create bot session
 const createBotSession = async (bot, method = 'pair') => {
     try {
         const sessionPath = path.join(SESSION_BASE_PATH, `session_${bot.id}`);
         const { state, saveCreds } = await useMultiFileAuthState(sessionPath);
-        
         const logger = pino({ level: 'silent' });
-        
+
         const socket = makeWASocket({
             auth: {
                 creds: state.creds,
                 keys: makeCacheableSignalKeyStore(state.keys, logger),
             },
-            printQRInTerminal: false,
             logger,
-            browser: Browsers.macOS('Safari')
+            browser: Browsers.macOS('Safari'),
+            version: (await import('@whiskeysockets/baileys')).fetchLatestBaileysVersion(),
+            syncFullHistory: true
         });
 
-        // Store socket reference
         activeSockets.set(bot.id, socket);
 
-        // Handle connection updates
+        // Connection updates & QR handling
         socket.ev.on('connection.update', async (update) => {
             const { connection, lastDisconnect, qr } = update;
-            
+
             if (qr && method === 'qr') {
-                // Return QR data for QR method
-                return qr;
+                global.io.emit('bot_qr', { botId: bot.id, qr });
             }
-            
+
             if (connection === 'open') {
-                await bot.update({
-                    status: 'connected',
-                    lastSeen: new Date()
-                });
-                
-                // Emit real-time update
-                global.io.emit('bot_status_update', {
-                    botId: bot.id,
-                    status: 'connected'
-                });
-                
-                console.log(`Bot ${bot.id} connected successfully`);
+                await bot.update({ status: 'connected', lastSeen: new Date() });
+                global.io.emit('bot_status_update', { botId: bot.id, status: 'connected' });
+                console.log(`✅ Bot ${bot.id} connected`);
             } else if (connection === 'close') {
                 const shouldReconnect = lastDisconnect?.error?.output?.statusCode !== 401;
-                
-                await bot.update({
-                    status: shouldReconnect ? 'connecting' : 'disconnected'
-                });
-                
+                await bot.update({ status: shouldReconnect ? 'connecting' : 'disconnected' });
                 activeSockets.delete(bot.id);
-                
+
                 if (shouldReconnect) {
-                    console.log(`Bot ${bot.id} disconnected, attempting to reconnect...`);
+                    console.log(`🔄 Bot ${bot.id} disconnected, reconnecting in 5s...`);
                     setTimeout(() => createBotSession(bot), 5000);
+                } else {
+                    console.error(`❌ Bot ${bot.id} logged out, delete session folder to relogin`);
                 }
             }
         });
 
-        // Handle credentials update
         socket.ev.on('creds.update', saveCreds);
 
-        // Setup message handlers
+        // Setup message & button handlers
         setupMessageHandlers(socket, bot);
 
-        // Request pairing code for pair method
         if (method === 'pair' && !socket.authState.creds.registered) {
             let retries = 3;
             let code;
-            
             while (retries > 0) {
                 try {
                     await delay(1500);
@@ -101,11 +84,10 @@ const createBotSession = async (bot, method = 'pair') => {
                     break;
                 } catch (error) {
                     retries--;
-                    console.warn(`Failed to request pairing code: ${error.message}, retries left: ${retries}`);
+                    console.warn(`Pairing code request failed: ${error.message}, retries left: ${retries}`);
                     await delay(2000);
                 }
             }
-            
             return code;
         }
 
@@ -123,53 +105,41 @@ const setupMessageHandlers = (socket, bot) => {
         if (!msg.message || msg.key.remoteJid === 'status@broadcast') return;
 
         try {
-            // Update bot statistics
             const stats = bot.statistics || {};
             stats.messagesReceived = (stats.messagesReceived || 0) + 1;
-            
             await bot.update({ statistics: stats });
 
-            // Handle commands
-            const text = msg.message.conversation || 
-                        msg.message.extendedTextMessage?.text || '';
-            
-            if (text.startsWith(bot.settings.prefix || '.')) {
-                const cmdName = text.slice((bot.settings.prefix || '.').length).split(' ')[0].toLowerCase();
-                
-                // Load and execute command
-                await executeCommand(socket, msg, cmdName, bot);
-                
-                // Update command statistics
-                stats.commandsExecuted = (stats.commandsExecuted || 0) + 1;
-                await bot.update({ statistics: stats });
-            }
-        } catch (error) {
-            console.error('Message handler error:', error);
+            const type = getContentType(msg.message);
+            const text =
+                type === 'conversation'
+                    ? msg.message.conversation
+                    : msg.message[type]?.text || msg.message[type]?.caption || '';
+
+            if (!text.startsWith(bot.settings.prefix || '.')) return;
+
+            const cmdName = text.slice((bot.settings.prefix || '.').length).split(' ')[0].toLowerCase();
+            await executeCommand(socket, msg, cmdName, bot);
+
+            stats.commandsExecuted = (stats.commandsExecuted || 0) + 1;
+            await bot.update({ statistics: stats });
+        } catch (err) {
+            console.error('Message handler error:', err);
         }
     });
 
-    // Handle status updates
+    // Button response handling
     socket.ev.on('messages.upsert', async ({ messages }) => {
         const msg = messages[0];
-        if (msg.key.remoteJid !== 'status@broadcast') return;
+        const type = getContentType(msg.message);
+        if (type !== 'buttonsResponseMessage') return;
 
-        try {
-            if (bot.settings.autoViewStatus) {
-                await socket.readMessages([msg.key]);
-            }
+        const buttonId = msg.message.buttonsResponseMessage.selectedButtonId;
+        const from = msg.key.remoteJid;
 
-            if (bot.settings.autoLikeStatus) {
-                const emojis = ['❤️', '👍', '🔥', '💯', '🎉'];
-                const randomEmoji = emojis[Math.floor(Math.random() * emojis.length)];
-                
-                await socket.sendMessage(
-                    msg.key.remoteJid,
-                    { react: { text: randomEmoji, key: msg.key } },
-                    { statusJidList: [msg.key.participant] }
-                );
-            }
-        } catch (error) {
-            console.error('Status handler error:', error);
+        if (buttonId === 'contact_owner') {
+            await socket.sendMessage(from, {
+                text: '📞 You can contact the owner at +94789737967'
+            }, { quoted: msg });
         }
     });
 };
@@ -177,13 +147,10 @@ const setupMessageHandlers = (socket, bot) => {
 // Execute command
 const executeCommand = async (socket, msg, cmdName, bot) => {
     try {
-        // Load command from plugins
         const commandPath = path.join(__dirname, '..', 'plugins', `${cmdName}.js`);
-        
         if (fs.existsSync(commandPath)) {
             delete require.cache[require.resolve(commandPath)];
             const command = require(commandPath);
-            
             if (typeof command === 'function') {
                 await command(socket, msg, bot);
             }
@@ -193,50 +160,27 @@ const executeCommand = async (socket, msg, cmdName, bot) => {
     }
 };
 
-// Get bot status
-const getBotStatus = async (botId) => {
+// Bot utility functions
+const getBotStatus = (botId) => {
     const socket = activeSockets.get(botId);
-    
-    if (!socket) {
-        return { status: 'disconnected', online: false };
-    }
-
-    return {
-        status: 'connected',
-        online: true,
-        user: socket.user,
-        lastSeen: new Date()
-    };
+    if (!socket) return { status: 'disconnected', online: false };
+    return { status: 'connected', online: true, user: socket.user, lastSeen: new Date() };
 };
 
-// Update bot settings
-const updateBotSettings = async (botId, settings) => {
+const updateBotSettings = (botId, settings) => {
     const socket = activeSockets.get(botId);
-    
     if (socket) {
-        // Apply settings to live bot
         console.log(`Updated settings for bot ${botId}:`, settings);
-        
-        // Emit real-time update
-        global.io.emit('bot_settings_update', {
-            botId,
-            settings
-        });
+        global.io.emit('bot_settings_update', { botId, settings });
     }
 };
 
-// Disconnect bot
 const disconnectBot = async (botId) => {
     const socket = activeSockets.get(botId);
-    
     if (socket) {
         socket.ws.close();
         activeSockets.delete(botId);
-        
-        await Bot.update(
-            { status: 'disconnected' },
-            { where: { id: botId } }
-        );
+        await Bot.update({ status: 'disconnected' }, { where: { id: botId } });
     }
 };
 
