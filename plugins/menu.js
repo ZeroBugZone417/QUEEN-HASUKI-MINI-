@@ -1,79 +1,33 @@
 /**
- * Menu Plugin (QUEEN HASUKI MINI) - Button Version
- * Copyright © 2025 Zero Bug Zone
- * Owner: Dineth Sudarshana
- * GitHub: github.com/zerobugzone417
+ * Menu Plugin (QUEEN HASUKI MINI) - Interactive Template Version
+ * Works on Baileys v6+
  */
+
+const { generateWAMessageFromContent, proto } = require('@whiskeysockets/baileys');
 
 module.exports = async (socket, msg, bot) => {
     try {
-        const prefix = bot.settings.prefix || '.';
-        
-        const menuMessage = `👑 *QUEEN HASUKI MINI* 👑
+        const prefix = (bot.settings && bot.settings.prefix) ? bot.settings.prefix : '.';
+
+        const menuText = `👑 *QUEEN HASUKI MINI* 👑
 Advanced Bot System
 
 🤖 BOT INFO
-• Name: ${bot.botName}
+• Name: ${bot.botName || 'Unknown'}
 • Version: 2.0.0
 • Prefix: ${prefix}
-• Status: Active
+• Status: Active`;
 
-📋 MAIN COMMANDS
-• ${prefix}alive
-• ${prefix}ping
-• ${prefix}help
-• ${prefix}settings
-
-🎵 MEDIA COMMANDS
-• ${prefix}song <name>
-• ${prefix}video <name>
-• ${prefix}ytmp3 <url>
-• ${prefix}ytmp4 <url>
-
-🛠️ UTILITY COMMANDS
-• ${prefix}sticker
-• ${prefix}weather <city>
-• ${prefix}translate <text>
-• ${prefix}qr <text>
-
-👥 GROUP COMMANDS
-• ${prefix}tagall
-• ${prefix}promote
-• ${prefix}demote
-• ${prefix}kick
-
-🎮 FUN COMMANDS
-• ${prefix}joke
-• ${prefix}quote
-• ${prefix}meme
-• ${prefix}fact`;
-
-        // Define buttons
         const buttons = [
-            { buttonId: `${prefix}alive`, buttonText: { displayText: 'Alive' }, type: 1 },
-            { buttonId: `${prefix}help`, buttonText: { displayText: 'Help' }, type: 1 },
-            { buttonId: `${prefix}ping`, buttonText: { displayText: 'Ping' }, type: 1 },
-            { buttonId: `${prefix}settings`, buttonText: { displayText: 'Settings' }, type: 1 },
+            { name: 'quick_reply', buttonParamsJson: JSON.stringify({ display_text: 'Alive', id: `${prefix}alive` }) },
+            { name: 'quick_reply', buttonParamsJson: JSON.stringify({ display_text: 'Help', id: `${prefix}help` }) },
+            { name: 'quick_reply', buttonParamsJson: JSON.stringify({ display_text: 'Ping', id: `${prefix}ping` }) },
+            { name: 'quick_reply', buttonParamsJson: JSON.stringify({ display_text: 'Settings', id: `${prefix}settings` }) },
         ];
 
-        const buttonMessage = {
-            text: menuMessage,
-            footer: '👑 QUEEN HASUKI MINI | © 2025 Zero Bug Zone',
-            buttons: buttons,
-            headerType: 1
-        };
-
-        await socket.sendMessage(msg.key.remoteJid, buttonMessage, { quoted: msg });
-
-        // Update statistics
-        const stats = bot.statistics || {};
-        stats.messagesSent = (stats.messagesSent || 0) + 1;
-        await bot.update({ statistics: stats });
-
-    } catch (error) {
-        console.error('Menu button command error:', error);
-        await socket.sendMessage(msg.key.remoteJid, {
-            text: '❌ Error executing menu button command'
-        }, { quoted: msg });
-    }
-};
+        const msgContent = generateWAMessageFromContent(msg.key.remoteJid, {
+            viewOnceMessage: {
+                message: {
+                    interactiveMessage: proto.Message.InteractiveMessage.create({
+                        body: proto.Message.InteractiveMessage.Body.create({
+                            text: menuText
