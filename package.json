@@ -17,7 +17,7 @@
     "fs-extra": "^11.2.0",
     "node-fetch": "^2.6.7",
     "pino": "^8.17.0",
-    "jimp": "^0.16.1",
+    "jimp": "^1.6.0",
     "@octokit/rest": "^20.0.2",
     "denethdev-ytmp3": "1.0.3",
     "yt-search": "2.12.1",
