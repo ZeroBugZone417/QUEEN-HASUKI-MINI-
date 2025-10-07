@@ -1,9 +1,25 @@
 {
-  "buildCommand": "npm install --legacy-peer-deps && npm run build",
+  "version": 2,
+  "builds": [
+    {
+      "src": "index.js",
+      "use": "@vercel/node"
+    }
+  ],
+  "routes": [
+    {
+      "src": "/(.*)",
+      "dest": "index.js"
+    }
+  ],
+  "buildCommand": "npm install --legacy-peer-deps && npm run build || npm start",
   "outputDirectory": ".",
   "build": {
     "env": {
       "NODE_PRE_GYP_FORCE_PURE_JS": "true"
     }
+  },
+  "env": {
+    "PORT": "3000"
   }
 }
