@@ -11,7 +11,7 @@
     "fix": "npx eslint . --fix"
   },
   "dependencies": {
-    "@adiwajshing/baileys": "^6.7.8",
+   "@whiskeysockets/baileys": "^6.7.8",
     "express": "^4.18.2",
     "express-rate-limit": "^7.1.5",
     "fs-extra": "^11.2.0",
