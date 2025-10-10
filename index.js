@@ -1,8 +1,7 @@
 /**
- * QUEEN-MINI Main Server
+ * QUEEN-MINI Main Server + WhatsApp Bot
  * Copyright © 2025 DarkSide Developers
  * Owner: DarkWinzo
- * GitHub: https://github.com/DarkWinzo
  */
 
 const express = require('express');
@@ -14,192 +13,159 @@ const compression = require('compression');
 const path = require('path');
 const chalk = require('chalk');
 const fs = require('fs');
-const chokidar = require('chokidar'); // 🔌 for hot reload support
 
 const config = require('./config');
 const { connectDatabase } = require('./database/connection');
 const { generalLimiter } = require('./middleware/rateLimiter');
+const { loadPlugins } = require('./plugins/bot'); // ✅ Plugin loader path fixed
 
-// Import routes
-const authRoutes = require('./routes/auth');
-const botRoutes = require('./routes/bot');
-const adminRoutes = require('./routes/admin');
-const userRoutes = require('./routes/user');
-
+// ===== EXPRESS SERVER =====
 const app = express();
 const server = http.createServer(app);
-const io = socketIo(server, {
-    cors: {
-        origin: "*",
-        methods: ["GET", "POST"]
-    }
-});
+const io = socketIo(server, { cors: { origin: "*", methods: ["GET","POST"] } });
 
-// Global middleware
-app.use(helmet({
-    contentSecurityPolicy: false,
-    crossOriginEmbedderPolicy: false
-}));
+// Middleware
+app.use(helmet({ contentSecurityPolicy: false, crossOriginEmbedderPolicy: false }));
 app.use(compression());
 app.use(cors());
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 app.use(generalLimiter);
 
-// Static files
+// Static
 app.use(express.static(path.join(__dirname, 'public')));
 app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 
-// Socket.IO for real-time updates
-global.io = io;
-
 // API Routes
-app.use('/api/auth', authRoutes);
-app.use('/api/bot', botRoutes);
-app.use('/api/admin', adminRoutes);
-app.use('/api/user', userRoutes);
+app.use('/api/auth', require('./routes/auth'));
+app.use('/api/bot', require('./routes/bot'));
+app.use('/api/admin', require('./routes/admin'));
+app.use('/api/user', require('./routes/user'));
 
-// Serve main application
-app.get('/', (req, res) => {
-    res.sendFile(path.join(__dirname, 'public', 'index.html'));
+// Serve main page
+app.get('/', (req, res) => res.sendFile(path.join(__dirname, 'public', 'index.html')));
+
+// 404 & error
+app.use('*', (req, res) => res.status(404).json({ success: false, message: 'Route not found' }));
+app.use((err, req, res, next) => {
+  console.error(chalk.red('Server Error:'), err);
+  res.status(500).json({ success: false, message: 'Internal server error' });
 });
 
-// 404 handler
-app.use('*', (req, res) => {
-    res.status(404).json({
-        success: false,
-        message: 'Route not found'
-    });
+// Socket.IO for real-time
+global.io = io;
+io.on('connection', socket => {
+  console.log(chalk.blue('Client connected:'), socket.id);
+  socket.on('disconnect', () => console.log(chalk.yellow('Client disconnected:'), socket.id));
 });
 
-// Global error handler
-app.use((error, req, res, next) => {
-    console.error(chalk.red('Server Error:'), error);
-    res.status(500).json({
-        success: false,
-        message: 'Internal server error'
-    });
-});
+// ===== WHATSAPP BOT =====
+const prefix = '.';
+const ownerNumber = ['94789737967'];
+const credsFolder = path.join(__dirname, 'auth_info_baileys');
 
-// Socket.IO connection handling
-io.on('connection', (socket) => {
-    console.log(chalk.blue('Client connected:'), socket.id);
-    
-    socket.on('disconnect', () => {
-        console.log(chalk.yellow('Client disconnected:'), socket.id);
-    });
-});
+// Initialize global commands
+if (!global.commands) global.commands = [];
 
-/* ===========================================================
-   🔌 QUEEN-MINI Plugin Loader (Auto Reload System)
-   =========================================================== */
-const pluginsPath = path.join(__dirname, 'plugins');
-global.plugins = new Map();
+async function startBot() {
+  // ✅ Dynamic import Baileys
+  const baileys = await import('@whiskeysockets/baileys');
+  const makeWASocket = baileys.default;
+  const {
+    useMultiFileAuthState,
+    getContentType,
+    fetchLatestBaileysVersion,
+    DisconnectReason,
+    Browsers
+  } = baileys;
 
-function loadPlugin(file) {
-    const pluginPath = path.join(pluginsPath, file);
-    try {
-        delete require.cache[require.resolve(pluginPath)];
-        const plugin = require(pluginPath);
-        global.plugins.set(file, plugin);
+  const { state, saveCreds } = await useMultiFileAuthState(credsFolder);
+  const { version } = await fetchLatestBaileysVersion();
 
-        // Auto-run plugin if it has run() function
-        if (typeof plugin.run === 'function') {
-            plugin.run(io, app);
-        }
+  const sock = makeWASocket({
+    logger: { level: 'silent' },
+    printQRInTerminal: true,
+    browser: Browsers.macOS('Firefox'),
+    auth: state,
+    version,
+    syncFullHistory: true
+  });
 
-        console.log(chalk.green(`✅ Loaded plugin: ${file}`));
-    } catch (err) {
-        console.error(chalk.red(`❌ Failed to load plugin: ${file}`), err);
+  sock.ev.on('connection.update', async update => {
+    const { connection, lastDisconnect } = update;
+    if (connection === 'close') {
+      const code = lastDisconnect?.error?.output?.statusCode;
+      if (code !== DisconnectReason.loggedOut) startBot();
+      else console.error('❌ Logged out from WhatsApp, delete auth folder to relogin.');
+    } else if (connection === 'open') {
+      console.log('✅ Bot connected');
+      // Load all plugins after bot connects
+      loadPlugins();
     }
+  });
+
+  sock.ev.on('creds.update', saveCreds);
+
+  // Messages handler
+  sock.ev.on('messages.upsert', async ({ messages }) => {
+    if (!messages || !messages.length) return;
+    const mek = messages[0];
+    if (!mek?.message || mek.key.remoteJid === 'status@broadcast') return;
+
+    mek.message = getContentType(mek.message) === 'ephemeralMessage'
+      ? mek.message.ephemeralMessage.message
+      : mek.message;
+
+    const type = getContentType(mek.message);
+    const from = mek.key.remoteJid;
+    const body =
+      type === 'conversation'
+        ? mek.message.conversation
+        : mek.message[type]?.text || mek.message[type]?.caption || '';
+
+    if (!body.startsWith(prefix)) return;
+
+    const commandName = body.slice(prefix.length).trim().split(' ')[0].toLowerCase();
+    const args = body.trim().split(/ +/).slice(1);
+    const q = args.join(' ');
+
+    const sender = mek.key.fromMe ? sock.user.id : (mek.key.participant || mek.key.remoteJid);
+    const isOwner = ownerNumber.includes((sender || '').split('@')[0]);
+    const reply = text => sock.sendMessage(from, { text }, { quoted: mek });
+
+    const cmd = global.commands.find(c => c.pattern === commandName);
+    if (cmd) {
+      try {
+        await cmd.function(sock, mek, { from, body, args, q, isOwner, reply });
+      } catch (err) {
+        console.error('[PLUGIN ERROR]', err);
+        await reply('❌ Error executing command');
+      }
+    }
+  });
+
+  return sock;
 }
 
-function unloadPlugin(file) {
-    if (global.plugins.has(file)) {
-        global.plugins.delete(file);
-        console.log(chalk.yellow(`⚠️ Unloaded plugin: ${file}`));
-    }
-}
-
-function loadAllPlugins() {
-    if (!fs.existsSync(pluginsPath)) {
-        fs.mkdirSync(pluginsPath);
-        console.log(chalk.yellow('⚠️ Plugins folder created (was missing).'));
-    }
-
-    const files = fs.readdirSync(pluginsPath).filter(f => f.endsWith('.js'));
-    files.forEach(loadPlugin);
-
-    console.log(chalk.cyan(`🔌 Total plugins loaded: ${global.plugins.size}`));
-}
-
-// Initial load
-loadAllPlugins();
-
-// 👀 Watch for plugin file changes (Hot Reload)
-chokidar.watch(pluginsPath, { ignoreInitial: true })
-    .on('add', file => {
-        if (file.endsWith('.js')) loadPlugin(path.basename(file));
-    })
-    .on('change', file => {
-        if (file.endsWith('.js')) {
-            unloadPlugin(path.basename(file));
-            loadPlugin(path.basename(file));
-            console.log(chalk.blue(`♻️ Reloaded plugin: ${path.basename(file)}`));
-        }
-    })
-    .on('unlink', file => {
-        if (file.endsWith('.js')) unloadPlugin(path.basename(file));
-    });
-
-/* ===========================================================
-   🚀 Start Server
-   =========================================================== */
+// ===== START SERVER =====
 const startServer = async () => {
-    try {
-        await connectDatabase();
-        
-        const PORT = config.PORT;
-        server.listen(PORT, () => {
-            console.log(chalk.green(`
-╔══════════════════════════════════════════════════════════════╗
-║                        QUEEN-MINI v${config.APP_VERSION}                        ║
-║                  Advanced WhatsApp Bot System                 ║
-║                                                              ║
-║  🚀 Server running on: http://localhost:${PORT}                ║
-║  📊 Database: Connected                                      ║
-║  🔒 Security: Enabled                                        ║
-║  ⚡ Real-time: Socket.IO Active                             ║
-║  🔌 Plugins: ${global.plugins.size} Loaded                           ║
-║                                                              ║
-║  Copyright © ${config.COPYRIGHT.YEAR} ${config.COPYRIGHT.COMPANY}                    ║
-║  Owner: ${config.COPYRIGHT.OWNER}                                      ║
-║  GitHub: ${config.COPYRIGHT.GITHUB}                ║
-╚══════════════════════════════════════════════════════════════╝
-            `));
-        });
-    } catch (error) {
-        console.error(chalk.red('Failed to start server:'), error);
-        process.exit(1);
-    }
+  try {
+    await connectDatabase();
+    await startBot();
+
+    const PORT = config.PORT || 8000;
+    server.listen(PORT, () =>
+      console.log(chalk.green(`QUEEN-MINI running at http://localhost:${PORT}`))
+    );
+  } catch (err) {
+    console.error(chalk.red('Failed to start server:'), err);
+    process.exit(1);
+  }
 };
 
 // Graceful shutdown
-process.on('SIGTERM', () => {
-    console.log(chalk.yellow('SIGTERM received, shutting down gracefully...'));
-    server.close(() => {
-        console.log(chalk.green('Server closed'));
-        process.exit(0);
-    });
-});
-
-process.on('SIGINT', () => {
-    console.log(chalk.yellow('SIGINT received, shutting down gracefully...'));
-    server.close(() => {
-        console.log(chalk.green('Server closed'));
-        process.exit(0);
-    });
-});
+process.on('SIGTERM', () => server.close(() => process.exit(0)));
+process.on('SIGINT', () => server.close(() => process.exit(0)));
 
 startServer();
 
