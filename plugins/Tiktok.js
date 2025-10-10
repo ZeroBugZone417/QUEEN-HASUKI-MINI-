@@ -1,7 +1,3 @@
-// ================================
-// *DON'T REMOVE CREDIT*
-// *🧑‍🔧 `Credit by:` Mr.Tharuzz ofc*
-//================================
 
 
 const fetch = require('node-fetch')
