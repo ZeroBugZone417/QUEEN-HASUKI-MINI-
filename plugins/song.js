@@ -1,43 +1,111 @@
-<!DOCTYPE html>
+<!DOCTYPE html>        
 <html lang="en">
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width,initial-scale=1" />
 <title>YouTube Downloader — Premium Neon</title>
+<link rel="icon" href="data:;base64,iVBORw0KGgo=">
+
 <style>
   @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700&display=swap');
-  body{margin:0; font-family:'Poppins',sans-serif; background:#07070a; color:#fff;}
+
+  :root{
+    --bg:#07070a;
+    --card: rgba(255,255,255,0.03);
+    --accent1: #ff0044;
+    --accent2: #8a00ff;
+    --muted: #bdbdbd;
+  }
+
+  *{box-sizing:border-box}
+  html,body{height:100%; margin:0; font-family:'Poppins',sans-serif; background:
+    radial-gradient(1200px 600px at 10% 10%, rgba(138,0,255,0.06), transparent 8%),
+    radial-gradient(900px 500px at 90% 90%, rgba(255,0,68,0.05), transparent 8%),
+    var(--bg); color:#fff; -webkit-font-smoothing:antialiased; -moz-osx-font-smoothing:grayscale;}
+
   .wrap{width:94%; max-width:980px; margin:40px auto;}
-  .card{background:rgba(255,255,255,0.03); border-radius:14px; padding:20px; border:1px solid rgba(255,0,76,0.12);}
-  .searchRow{display:flex; gap:10px; margin-top:10px;}
-  .input{flex:1; display:flex; gap:8px; align-items:center; background:rgba(255,255,255,0.02); border-radius:10px; padding:10px; border:1px solid rgba(255,0,76,0.08);}
-  .input input{background:transparent; border:0; outline:0; color:#fff; width:100%;}
-  .btn{background:linear-gradient(90deg,#ff0044,#8a00ff); border:0; padding:10px 14px; border-radius:10px; cursor:pointer; color:#fff; font-weight:600;}
-  .results{margin-top:16px; display:flex; flex-direction:column; gap:12px;}
-  .resultItem{display:flex; gap:12px; align-items:center; background:rgba(255,255,255,0.01); border-radius:10px; padding:10px; border:1px solid rgba(255,255,255,0.02);}
+  @media (max-width:900px){ .wrap{padding-bottom:40px;} }
+
+  .card{
+    background:var(--card);
+    border-radius:14px;
+    padding:20px;
+    border:1px solid rgba(255,0,76,0.12);
+    box-shadow:0 8px 30px rgba(0,0,0,0.6), 0 0 30px rgba(138,0,255,0.04);
+    position:relative;
+    overflow:hidden;
+  }
+
+  header.site {
+    display:flex; gap:12px; align-items:center;
+    margin-bottom:14px;
+  }
+  .logo {
+    width:56px; height:56px; border-radius:12px;
+    display:flex; align-items:center; justify-content:center;
+    background:linear-gradient(135deg,var(--accent1),var(--accent2));
+    box-shadow:0 6px 18px rgba(138,0,255,0.18);
+    font-weight:700; font-size:18px;
+  }
+  .title h1{margin:0; font-size:20px; color:#fff; letter-spacing:0.2px;}
+  .title p{margin:2px 0 0; color:var(--muted); font-size:13px;}
+
+  .searchRow{display:flex; gap:10px; margin-top:6px;}
+  .input{
+    flex:1; display:flex; gap:8px; align-items:center;
+    background:rgba(255,255,255,0.02); border-radius:10px; padding:10px;
+    border:1px solid rgba(255,0,76,0.08);
+  }
+  .input input{
+    background:transparent; border:0; outline:0; color:#fff; width:100%; font-size:15px;
+  }
+  .btn{
+    background:linear-gradient(90deg,var(--accent1),var(--accent2));
+    border:0; padding:10px 14px; border-radius:10px; cursor:pointer; color:#fff;
+    font-weight:600; box-shadow:0 8px 24px rgba(255,0,76,0.12);
+  }
+
+  .results{margin-top:16px; display:flex; flex-direction:column; gap:12px; max-height:70vh; overflow:auto; padding-right:6px;}
+  .resultItem{display:flex; gap:12px; align-items:center; background:linear-gradient(180deg, rgba(255,255,255,0.01), transparent); border-radius:10px; padding:10px; border:1px solid rgba(255,255,255,0.02);}
   .resultThumb{width:110px; height:62px; border-radius:8px; overflow:hidden; flex-shrink:0; background:#111;}
   .resultMeta{flex:1}
-  .resultMeta h4{margin:0; font-size:15px;}
-  .resultMeta p{margin:4px 0 0; font-size:13px; color:#bdbdbd;}
-  .resultActions{display:flex; gap:8px;}
+  .resultMeta h4{margin:0; font-size:15px; line-height:1.15;}
+  .resultMeta p{margin:6px 0 0; font-size:13px; color:var(--muted);}
+  .resultActions{display:flex; gap:8px; align-items:center;}
   .smallBtn{padding:8px 10px; border-radius:8px; border:0; cursor:pointer; font-weight:600; font-size:13px;}
   .smallBtn.mp3{background:linear-gradient(90deg,#00c853,#00e676); color:#030;}
   .smallBtn.mp4{background:linear-gradient(90deg,#2196f3,#7c4dff); color:#fff;}
-  .log{margin-top:14px; font-family:monospace; font-size:13px; color:#bdbdbd; background:rgba(255,255,255,0.02); padding:10px; border-radius:8px;}
+
+  .log{margin-top:14px; font-family:monospace; font-size:13px; color:var(--muted); background:rgba(255,255,255,0.02); padding:10px; border-radius:8px; min-height:46px; overflow:auto;}
+
+  footer.foot{opacity:0.7; margin-top:14px; font-size:13px; color:var(--muted); text-align:center;}
+  .glow{box-shadow:0 8px 36px rgba(138,0,255,0.06), 0 0 30px rgba(255,0,76,0.04);}
 </style>
 </head>
 <body>
+
 <div class="wrap">
-  <div class="card">
-    <h1>YouTube Downloader — Premium</h1>
+  <div class="card glow">
+    <header class="site">
+      <div class="logo">YT</div>
+      <div class="title">
+        <h1>YouTube Downloader — Premium</h1>
+        <p>Search & download MP3 / MP4 — Dark Neon UI</p>
+      </div>
+    </header>
+
     <div class="searchRow">
       <div class="input">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" style="opacity:0.8"><path d="M21 21l-4.35-4.35" stroke="#fff" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
         <input id="q" placeholder="Search song or paste YouTube URL..." />
       </div>
       <button class="btn" id="searchBtn">Search</button>
     </div>
-    <div id="results" class="results"></div>
+
+    <div id="results" class="results" aria-live="polite"></div>
+
     <div class="log" id="log">Ready…</div>
+    <footer class="foot">© POWERD BY BLACK MATRIX DEV — Developed by Dineth Sudarshana</footer>
   </div>
 </div>
 
@@ -52,81 +120,83 @@ function log(msg, err=false){
   logEl.innerText = `[${time}] ${msg}` + (err ? " ⚠️" : "");
 }
 
+function sanitizeText(s, max=80){ return s?.length>max ? s.slice(0,max-1)+'…':s; }
+
 async function searchYT(query){
-  try {
+  const api1 = `https://tharuzz-ofc-apis.vercel.app/api/search/ytsearch?query=${encodeURIComponent(query)}`;
+  try{
     log('Searching...');
-    const res = await fetch(`https://api-aswin-sparky.vercel.app/api/download/ytmp3?query=${encodeURIComponent(query)}`);
+    const res = await fetch(api1);
+    if(!res.ok) throw new Error('API failed');
     const data = await res.json();
-    if(!data || !data.result) throw new Error('No results');
-    return [data.result]; // return single object as array
-  } catch(e){
-    log('Search failed', true);
-    return [];
-  }
+    if(!data?.result?.length) throw new Error('No results');
+    return data.result.map(item=>(({
+      title: item.title || "Unknown",
+      url: item.url || item.id,
+      thumbnail: item.thumbnail || item.thumb,
+      duration: item.timestamp || item.duration || "Unknown",
+      views: item.views || "N/A",
+      published: item.ago || ""
+    })));
+  }catch(e){ log('Search failed', true); return []; }
+}
+
+// Oceansaver download helper
+function oceansaverDownload(url, type='mp3'){
+  const apiKey = 'dfcb6d76f2f6a9894gjkege8a4ab232222'; // replace with your key
+  return `https://p.oceansaver.in/ajax/download.php?format=${type}&url=${encodeURIComponent(url)}&api=${apiKey}`;
 }
 
 function renderResults(list){
   resultsEl.innerHTML = '';
-  if(list.length===0){ resultsEl.innerHTML='<div style="color:#bdbdbd">No results found.</div>'; return; }
+  if(!list.length){ resultsEl.innerHTML='<div style="color:var(--muted)">No results found.</div>'; return; }
   list.forEach((it, idx)=>{
-    const item = document.createElement('div');
+    const item=document.createElement('div');
     item.className='resultItem';
-    item.innerHTML = `
-      <div class="resultThumb"><img src="${it.thumbnail || ''}" style="width:100%;height:100%;object-fit:cover"/></div>
+    item.innerHTML=`<div class="resultThumb"><img src="${it.thumbnail}" style="width:100%;height:100%;object-fit:cover"/></div>
       <div class="resultMeta">
-        <h4>${it.title}</h4>
-        <p>${it.duration || 'N/A'} • ${it.views || 'N/A'}</p>
+        <h4 title="${it.title}">${sanitizeText(it.title,80)}</h4>
+        <p>${it.duration} • ${it.views} • ${it.published}</p>
       </div>
       <div class="resultActions">
-        <button class="smallBtn mp3" data-url="${it.video_url}">MP3</button>
-        <button class="smallBtn mp4" data-url="${it.video_url}">MP4</button>
-      </div>
-    `;
+        <button class="smallBtn mp3" data-idx="${idx}">MP3</button>
+        <button class="smallBtn mp4" data-idx="${idx}">MP4</button>
+      </div>`;
     resultsEl.appendChild(item);
   });
 
   document.querySelectorAll('.smallBtn.mp3').forEach(btn=>{
-    btn.onclick = async ()=>{
-      try {
-        log('Preparing MP3 download...');
-        const res = await fetch(`https://api-aswin-sparky.vercel.app/api/download/ytmp3?query=${encodeURIComponent(btn.dataset.url)}`);
-        const data = await res.json();
-        const a=document.createElement('a');
-        a.href = data.result.download_url;
-        a.download = (data.result.title || 'song')+'.mp3';
-        a.target='_blank';
-        document.body.appendChild(a); a.click(); a.remove();
+    btn.onclick=async ()=>{
+      const v=list[parseInt(btn.dataset.idx)];
+      try{
+        const dl = oceansaverDownload(v.url, 'mp3');
+        const a=document.createElement('a'); a.href=dl; a.download=(v.title||'song')+'.mp3'; a.click();
         log('MP3 download started.');
-      } catch(e){ log('Download failed', true); alert('MP3 download failed'); }
-    }
+      }catch(e){ log('Download failed',true); }
+    };
   });
 
   document.querySelectorAll('.smallBtn.mp4').forEach(btn=>{
-    btn.onclick = async ()=>{
-      try {
-        log('Preparing MP4 download...');
-        const res = await fetch(`https://api-aswin-sparky.vercel.app/api/download/ytmp4?url=${encodeURIComponent(btn.dataset.url)}`);
-        const data = await res.json();
-        const a=document.createElement('a');
-        a.href = data.result.download_url;
-        a.download = (data.result.title || 'video')+'.mp4';
-        a.target='_blank';
-        document.body.appendChild(a); a.click(); a.remove();
+    btn.onclick=async ()=>{
+      const v=list[parseInt(btn.dataset.idx)];
+      try{
+        const dl = oceansaverDownload(v.url, 'mp4');
+        const a=document.createElement('a'); a.href=dl; a.download=(v.title||'video')+'.mp4'; a.click();
         log('MP4 download started.');
-      } catch(e){ log('Download failed', true); alert('MP4 download failed'); }
-    }
+      }catch(e){ log('Download failed',true); }
+    };
   });
 }
 
-searchBtn.addEventListener('click', async ()=>{
-  const q = qEl.value.trim();
-  if(!q) return log('Enter search term or YouTube URL!');
-  resultsEl.innerHTML = '<div style="color:#bdbdbd">Searching…</div>';
-  const list = await searchYT(q);
+searchBtn.addEventListener('click',async ()=>{
+  const q=qEl.value.trim(); if(!q) return log('Enter search term or paste YouTube URL!');
+  resultsEl.innerHTML='<div style="color:var(--muted)">Searching…</div>';
+  const list=await searchYT(q);
   renderResults(list);
 });
 
-qEl.addEventListener('keydown', (e)=>{ if(e.key==='Enter') searchBtn.click(); });
+qEl.addEventListener('keydown',e=>{ if(e.key==='Enter') searchBtn.click(); });
+log('Ready. Paste a YouTube link or search a song.');
 </script>
 </body>
 </html>
