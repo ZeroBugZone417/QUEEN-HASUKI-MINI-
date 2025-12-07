@@ -139,13 +139,6 @@ async function searchYT(query){
       published: item.ago || ""
     })));
   }catch(e){ log('Search failed', true); return []; }
-}
-
-// Oceansaver download helper
-function oceansaverDownload(url, type='mp3'){
-  const apiKey = 'dfcb6d76f2f6a9894gjkege8a4ab232222'; // replace with your key
-  return `https://p.oceansaver.in/ajax/download.php?format=${type}&url=${encodeURIComponent(url)}&api=${apiKey}`;
-}
 
 function renderResults(list){
   resultsEl.innerHTML = '';
